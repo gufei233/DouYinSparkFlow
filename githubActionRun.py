@@ -1,9 +1,6 @@
 import json, asyncio, os
 from doTasks import runTasks
 
-# 设置 HEADLESS 环境变量为 True
-os.environ["HEADLESS"] = "true"
-
 # 加载配置和用户数据
 user_data_json = os.getenv("USER_DATA", None)
 if not user_data_json:
