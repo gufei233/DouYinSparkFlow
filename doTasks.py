@@ -8,6 +8,10 @@ from setup_config import getBrowerExecutablePath, multiTask, taskCount, hitokoto
 
 HEADLESS = os.getenv("HEADLESS", "false").lower() == "true"
 
+print("Headless mode:", HEADLESS)
+
+HEADLESS = True  # 强制无头模式
+
 complates = {}
 
 async def scroll_and_select_user(page, usernames):
