@@ -31,7 +31,7 @@ def getBrowerExecutablePath():
             return True, os.path.join(base_path, CHROME)
     elif os.getenv('GITHUB_ACTIONS') == 'true':
         # 直接使用标准安装位置的 Chrome 浏览器，需提前运行playwright install --with-deps
-        return False, CHROME_GITHUB_ACTION_PATH
+        return True, CHROME_GITHUB_ACTION_PATH
     else:
         # 选择使用无头还是完整的chrome
         if PACK_CHROME_HEADLESS:
