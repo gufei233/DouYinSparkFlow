@@ -113,8 +113,8 @@ async def scroll_and_select_user(page, username, targets):
 async def do_user_task(browser, username, cookies, targets, semaphore):
     async with semaphore:  # 使用信号量控制并发数量
         context = await browser.new_context()  # 每个任务使用独立的上下文
-        context.set_default_navigation_timeout(90000)  # 设置导航超时时间为 90 秒
-        context.set_default_timeout(60000)  # 设置所有操作的默认超时时间为 60 秒
+        context.set_default_navigation_timeout(120000)  # 设置导航超时时间为 90 秒
+        context.set_default_timeout(120000)  # 设置所有操作的默认超时时间为 120 秒
 
         page = await context.new_page()
         # 打开抖音创作者中心
