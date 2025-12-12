@@ -11,28 +11,39 @@
 
 ### 使用
 
-1. 克隆项目到本地，并完成环境配置
+#### 1. 克隆项目到本地，并完成环境配置
 ```shell
 pip install -r requirements.txt
 ```
 
-下载[chrome-headless-shell-win64](https://storage.googleapis.com/chrome-for-testing-public/142.0.7444.175/win64/chrome-headless-shell-win64.zip)解压到本地的`chrome\chrome-headless-shell-win64\chrome-headless-shell.exe`
+#### 2. 运行main.py
+首次运行`python main.py`时，会自动下载需要的测试浏览器，默认从Mozilla的镜像站下载，需要保证网络通畅。
 
-下载[chrome-headless-shell-win64](https://storage.googleapis.com/chrome-for-testing-public/142.0.7444.175/win64/chromedriver-win64.zip)解压到本地的`chrome\chrome-win64\chrome.exe`
+#### 3. 登录用户
+运行main.py后，会弹出可选择的项目，这时选择添加用户登录，你可以选择添加多个用户。具体操作方式根据提示在弹出窗口扫码登录抖音创作者中心即可，登录成功后你需要根据提示查看对应联系人的名称，并在控制台输入。
 
-2. 本地运行脚本并完成测试
-```shell
-python run.py
-```
+#### 4. 更改配置
 
-你需要先按照提示添加用户，如果需要添加多个用户则多次运行脚本
-之后进行本地测试，如果发送消息成功即可，选择`压缩 usersData.json`获取到压缩后的usersData
+你可以选择更改config.json中的配置，目前proxyAddress的代理设置还没有实现。其他项目解释如下：
+|名称|作用解释|期望值|
+|-----|-----|-----|
+|multiTask|是否启用多任务，登录多个账户后生效，启用后同时操作多个账户的任务加快执行速度|`true` `false`|
+|taskCount|最大同时操作的账户数目，需要先启用multiTask|int，默认`5`|
+|messageTemplate|发送消息的模板，可以从聊天框编辑好个时候复制|使用`[API]`引用每日一言内容 默认值为： `[盖瑞]今日火花[加一]\n—— [右边] 每日一言 [左边] ——\n[API]`|
+|hitokotoTypes|每日一言消息允许的类型|可以留空使用所有类型`[]`,全部可选类型的列表为：`["动画","漫画","游戏","文学","原创","来自网络","影视","诗词","哲学","抖机灵","其他"]`|
 
-3. Github Action部署
+#### 5. 测试运行
 
-克隆本项目，并在Action中启用`DouYin Spark Flow Schedule Run`这个工作流
+再次运行main.py之后选择`3.本地运行任务`,查看是否能够正常执行任务
 
-之后再settings->Environments下新建一个`user-data`环境，继续在这个`user-data`环境的Environment secrets添加名为`USER_DATA`的项目，内容就是压缩后的usersData
+#### 6. Github Acion部署
 
-4. （可选）手动运行Action进行测试
+项目可以部署到Github Action每日定时触发，在测试完毕后，你需要将本地代码推送到自己的Github仓库，你也可以选择直接克隆本仓库后续将config.json同步即可（如果你更改了设置的话）。本地通过usersData.json存储已经登录的账户凭证，为了防止信息泄露，Action不能像本地那样从明文读取这个配置，也不要将这个文件上传到Github，正确做法是将内容存放到`secrets`中
+
+> 方法: 在你的Github仓库下操作，选择settings->Environments，在下面新建一个`user-data`环境，继续在这个`user-data`环境的Environment secrets添加名为`USER_DATA`的项目
+
+关于这个配置的内容可以再次运行main.py,选择`2. 获取Github Action配置`将对应输出内容填入`USER_DATA`的值即可
+
+
+#### 7. （可选）手动触发Action进行测试
 
