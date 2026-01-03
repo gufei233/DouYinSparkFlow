@@ -38,11 +38,14 @@ async def retry_operation(name, operation, retries=3, delay=2, *args, **kwargs):
 
 async def scroll_and_select_user(page, username, targets):
     """尝试滚动并查找用户名"""
-    # 定义目标元素和结束标志的选择器
+    # 定义目标元素和滚动容器的选择器
     friends_tab_selector = 'xpath=//*[@id="sub-app"]/div/div/div[1]/div[2]'
     target_selector = 'xpath=//*[@id="sub-app"]/div/div[1]/div[2]/div[2]//div[contains(@class, "semi-list-item-body semi-list-item-body-flex-start")]'
-    end_signal_selector = 'xpath=//*[@id="sub-app"]/div/div[1]/div[2]/div[2]//div[contains(@class, "status-wrapper-Tayo1v")]'
     scrollable_friends_selector = 'xpath=//*[@id="sub-app"]/div/div[1]/div[2]/div[2]/div/div/div[3]/div/div/div/ul/div'
+    
+    # [修改] 更加精确的状态选择器
+    no_more_selector = 'xpath=//div[contains(@class, "no-more-tip-ftdJnu")]'
+    loading_selector = 'xpath=//div[contains(@class, "semi-spin")]'
 
     logger.debug(f"账号 {username} 开始查找目标好友列表")
     logger.debug(f"账号 {username} 目标好友列表: {targets}")
@@ -63,7 +66,9 @@ async def scroll_and_select_user(page, username, targets):
 
     await asyncio.sleep(2)  # 等待好友列表加载
 
-    found_usernames = set()  # 存储找到的用户名
+    found_usernames = set()
+    # [修改] 复制一份目标列表用于追踪进度
+    remaining_targets = set(targets)
 
     while True:
         # 查找所有目标元素
@@ -82,7 +87,6 @@ async def scroll_and_select_user(page, username, targets):
                 found_usernames.add(targetName)
 
                 logger.debug(f"账号 {username} 找到好友 {targetName}")
-
                 # 检查是否是目标用户名
                 if targetName in targets:
                     await element.click()
@@ -90,24 +94,47 @@ async def scroll_and_select_user(page, username, targets):
                         f"账号 {username} 选中目标好友 {targetName} 准备开始交互"
                     )
                     yield targetName
+                    
+                    # [修改] 标记已找到，如果全找到了直接退出
+                    if targetName in remaining_targets:
+                        remaining_targets.remove(targetName)
+                    if len(remaining_targets) == 0:
+                        logger.info(f"账号 {username} 所有目标好友均已找到，停止搜索")
+                        return
                     break
             except Exception as e:
                 traceback.print_exc()
         else:
-            # 检查是否存在结束标志
-            if await page.locator(end_signal_selector).count() > 0:
+            # [修改] 状态检测逻辑
+            
+            # 1. 检查是否到底（没有更多了）
+            if await page.locator(no_more_selector).count() > 0:
+                logger.info(f"账号 {username} 检测到'没有更多了'标志，已到达底部")
+                if len(remaining_targets) > 0:
+                    logger.warning(f"账号 {username} 搜索结束，仍有以下好友未找到: {remaining_targets}")
                 break
 
-            # 如果没有找到目标用户名，滚动容器
+            # 2. 检查是否正在加载
+            if await page.locator(loading_selector).count() > 0:
+                logger.debug(f"账号 {username} 列表正在加载中 (Loading)...")
+                await asyncio.sleep(1.5) # 给加载留点时间
+                # 不 break，继续去滚动以触发后续内容
+
+            # 3. 滚动容器
             scrollable_element = await page.locator(
                 scrollable_friends_selector
             ).element_handle()
-            await page.evaluate(
-                "(element) => element.scrollTop += 100", scrollable_element
-            )
-            logger.debug(f"账号 {username} 滚动好友列表以加载更多好友")
-            await asyncio.sleep(1)  # 等待加载内容
-            continue
+            
+            if scrollable_element:
+                # [修改] 加大滚动幅度
+                await page.evaluate(
+                    "(element) => element.scrollTop += 800", scrollable_element
+                )
+                logger.debug(f"账号 {username} 滚动好友列表以加载更多好友")
+                await asyncio.sleep(1.5)
+            else:
+                logger.error(f"账号 {username} 未找到滚动容器，退出")
+                break
 
 
 async def do_user_task(browser, username, cookies, targets, semaphore):
