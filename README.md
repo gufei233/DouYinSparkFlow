@@ -14,6 +14,7 @@
 #### 1. 克隆项目到本地，并完成环境配置
 ```shell
 pip install -r requirements.txt
+cp usersData.example.json usersData.json
 ```
 
 #### 2. 运行main.py
